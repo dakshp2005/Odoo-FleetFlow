@@ -101,7 +101,10 @@ The assistant operates with secure server-side data access, ensuring sensitive o
 
 ## Team
 
-**Daksh Patel** — [@dakshp2005](https://github.com/dakshp2005)_
-**Bhautik Vaghamshi** — [@bhautik-2004](https://github.com/bhautik-2004)_
-**Vashisht Brahmbhatt** — [@vdb24](https://github.com/vdb24)_
+**Daksh Patel** — [@dakshp2005](https://github.com/dakshp2005)
+
+**Bhautik Vaghamshi** — [@bhautik-2004](https://github.com/bhautik-2004)
+
+**Vashisht Brahmbhatt** — [@vdb24](https://github.com/vdb24)
+
 
