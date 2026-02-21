@@ -1,4 +1,4 @@
-# 🚛 FleetFlow — Intelligent Fleet Management System
+# FleetFlow — Intelligent Fleet Management System
 
 <div align="center">
 
@@ -14,7 +14,7 @@
 
 ---
 
-## 📋 Overview
+## Overview
 
 FleetFlow is a comprehensive fleet management platform designed for logistics companies, transport businesses, and fleet operators of all sizes. It provides real-time visibility into vehicles, trips, drivers, maintenance schedules, and expenses — all from a single, unified dashboard.
 
@@ -22,7 +22,7 @@ An embedded **AI Assistant** powered by Google Gemini can query fleet data, crea
 
 ---
 
-## ✨ Features
+## Features
 
 | Module                    | Description                                                                                        |
 | ------------------------- | -------------------------------------------------------------------------------------------------- |
@@ -38,7 +38,7 @@ An embedded **AI Assistant** powered by Google Gemini can query fleet data, crea
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer                  | Technology                                            |
 | ---------------------- | ----------------------------------------------------- |
@@ -55,7 +55,7 @@ An embedded **AI Assistant** powered by Google Gemini can query fleet data, crea
 
 ---
 
-## 🏆 Benefits & Advantages
+## Benefits & Advantages
 
 ### For Fleet Operators
 
@@ -86,7 +86,7 @@ An embedded **AI Assistant** powered by Google Gemini can query fleet data, crea
 
 ---
 
-## 🤖 AI Assistant
+## AI Assistant
 
 The embedded AI assistant uses **Google Gemini 2.0 Flash** via the Vercel AI SDK. It can:
 
@@ -99,14 +99,9 @@ The assistant operates with secure server-side data access, ensuring sensitive o
 
 ---
 
-## 🧑‍💻 Team
+## Team
 
-**Daksh Patel** — [@dakshp2005](https://github.com/dakshp2005)
-**Bhautik Vaghamshi** — [@bhautik-2004](https://github.com/bhautik-2004)
-**Vashisht Brahmbhatt** — [@vdb24](https://github.com/vdb24)
+**Daksh Patel** — [@dakshp2005](https://github.com/dakshp2005)_
+**Bhautik Vaghamshi** — [@bhautik-2004](https://github.com/bhautik-2004)_
+**Vashisht Brahmbhatt** — [@vdb24](https://github.com/vdb24)_
 
----
-
-## 📄 License
-
-This project is for educational and demonstration purposes.
