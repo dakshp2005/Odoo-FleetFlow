@@ -49,7 +49,7 @@ export function useAnalytics() {
         // Direct query — no broken view, compute km/L in JS
         supabase
           .from('fuel_logs')
-          .select('id, fuel_date, liters, total_cost, trip_id, trips(distance_km, vehicles(id, name))')
+          .select('id, fuel_date, liters, total_cost, trip_id, trips!inner(distance_km, vehicles!inner(id, name))')
           .not('trip_id', 'is', null)
           .order('fuel_date', { ascending: true })
           .limit(500),
@@ -98,7 +98,7 @@ export function useAnalytics() {
       return {
         monthly: (monthly ?? []) as MonthlyFinancialSummaryRow[],
         costSummary: (costSummary ?? []) as VehicleCostSummary[],
-        fuelLogs: (fuelLogs ?? []) as RawFuelLog[],
+        fuelLogs: (fuelLogs ?? []) as unknown as RawFuelLog[],
         fleetKpi,
         deadStock: deadStock as Pick<Vehicle, 'id' | 'name' | 'status'>[],
       }

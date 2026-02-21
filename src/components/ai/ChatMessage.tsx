@@ -1,15 +1,30 @@
 import { Bot, User } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
-import type { UIMessage } from 'ai'
 
-export function ChatMessage({ message }: Readonly<{ message: UIMessage }>) {
+interface TextPart {
+  type: 'text'
+  text: string
+}
+
+interface MessageProp {
+  role: string
+  content?: string
+  parts?: Array<{ type: string; text?: string }>
+}
+
+export function ChatMessage({ message }: Readonly<{ message: MessageProp }>) {
   const isAI = message.role === 'assistant'
 
-  // Extract text from parts (new AI SDK v4 shape)
-  const text = message.parts
-    .filter((p): p is Extract<typeof p, { type: 'text' }> => p.type === 'text')
-    .map((p) => p.text)
-    .join('')
+  // Extract text from content or parts (handle both AI SDK formats)
+  let text = ''
+  if (message.content) {
+    text = message.content
+  } else if (message.parts) {
+    text = message.parts
+      .filter((p): p is TextPart => p.type === 'text' && typeof p.text === 'string')
+      .map((p) => p.text)
+      .join('')
+  }
 
   if (!text) return null
 

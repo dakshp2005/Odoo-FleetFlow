@@ -1,4 +1,6 @@
 {
-  "/api/chat/route": "app/api/chat/route.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/(dashboard)/analytics/page": "app/(dashboard)/analytics/page.js",
+  "/(dashboard)/vehicles/page": "app/(dashboard)/vehicles/page.js",
   "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js"
 }

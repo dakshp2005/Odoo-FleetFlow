@@ -21,7 +21,7 @@ export function AppSidebar() {
           <div className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center">
             <span className="text-white font-bold text-sm">FF</span>
           </div>
-          <div>
+          <div className="group-data-[collapsible=icon]:hidden">
             <p className="font-semibold text-sm leading-none">FleetFlow</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">Fleet Management</p>
           </div>
@@ -30,7 +30,7 @@ export function AppSidebar() {
 
       {/* Nav */}
       <SidebarContent className="px-2 py-3">
-        <SidebarMenu>
+        <SidebarMenu className="gap-2">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href ||
               (item.href !== '/dashboard' && pathname.startsWith(item.href))
