@@ -10,11 +10,11 @@ export function useMaintenance() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('maintenance_logs')
-        .select('*')
+        .select('*, vehicles(id,name,license_plate)')
         .order('service_date', { ascending: false })
       
       if (error) throw error
-      return data as MaintenanceLog[]
+      return data as (MaintenanceLog & { vehicles: { id: string; name: string; license_plate: string } | null })[]
     }
   })
 }

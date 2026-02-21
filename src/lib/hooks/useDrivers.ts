@@ -1,20 +1,20 @@
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import type { Driver } from '@/lib/types/database'
+import type { DriverPerformanceSummary } from '@/lib/types/database'
 
 export function useDrivers() {
   const supabase = createClient()
 
   return useQuery({
-    queryKey: ['drivers'],
+    queryKey: ['drivers', 'driver_performance_summary'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('drivers')
+        .from('driver_performance_summary')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('full_name', { ascending: true })
       
       if (error) throw error
-      return data as Driver[]
+      return data as DriverPerformanceSummary[]
     }
   })
 }

@@ -8,19 +8,83 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils/cn"
+import { Button } from "@/components/ui/button"
+import { createClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
+import type { MaintenanceLog } from "@/lib/types/database"
+import { Skeleton } from "@/components/ui/skeleton"
 
-export function MaintenanceTable() {
-  const records = [
-    { id: "M-5001", vehicle: "KA-01-MH-1234", type: "Scheduled", service: "Engine Oil Change", cost: "₹8,500", date: "15/02/2026", status: "Completed" },
-    { id: "M-5002", vehicle: "KA-01-MH-5678", type: "Repair", service: "Brake Pad Replacement", cost: "₹12,200", date: "22/02/2026", status: "Pending" },
-    { id: "M-5003", vehicle: "KA-01-MH-9012", type: "Emergency", service: "Tyre Burst Recovery", cost: "₹24,000", date: "10/02/2026", status: "Completed" },
-    { id: "M-5004", vehicle: "KA-01-NH-3456", type: "Scheduled", service: "Annual Fitness Check", cost: "₹15,000", date: "25/02/2026", status: "Scheduled" },
-  ]
+type MaintenanceRow = MaintenanceLog & {
+  vehicles: { id: string; name: string; license_plate: string } | null
+}
 
-  const statusStyles: Record<string, string> = {
-    'Completed': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    'Pending':   'bg-amber-50  text-amber-700  border-amber-200',
-    'Scheduled': 'bg-blue-50   text-blue-700   border-blue-200',
+const statusStyles: Record<string, string> = {
+  Open:        'bg-zinc-100   text-zinc-700   border-zinc-300',
+  'In Progress': 'bg-amber-50 text-amber-700  border-amber-200',
+  Completed:   'bg-emerald-50 text-emerald-700 border-emerald-200',
+}
+
+export function MaintenanceTable({
+  rows,
+  isLoading,
+  onRefresh,
+}: Readonly<{
+  rows: MaintenanceRow[]
+  isLoading: boolean
+  onRefresh: () => void
+}>) {
+  const markComplete = async (id: string) => {
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('maintenance_logs')
+      .update({ is_completed: true })
+      .eq('id', id)
+
+    if (error) {
+      toast.error(`Failed to mark complete: ${error.message}`)
+      return
+    }
+
+    toast.success('Service completed. Vehicle is now Available.')
+    onRefresh()
+  }
+
+  const handleDelete = async (row: MaintenanceRow) => {
+    if (!row.is_completed) {
+      toast.error('Only completed logs can be deleted. Mark it complete first.')
+      return
+    }
+
+    if (!globalThis.confirm(`Delete service log for ${row.vehicles?.name ?? 'this vehicle'}?`)) return
+
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('maintenance_logs')
+      .delete()
+      .eq('id', row.id)
+
+    if (error) {
+      toast.error(`Failed to delete log: ${error.message}`)
+      return
+    }
+
+    toast.success('Maintenance log removed')
+    onRefresh()
+  }
+
+  if (isLoading) {
+    return (
+      <div className="rounded-md border p-4 space-y-3">
+        <Skeleton className="h-6 w-1/3" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    )
+  }
+
+  if (rows.length === 0) {
+    return <div className="rounded-md border p-6 text-sm text-muted-foreground">No maintenance logs found</div>
   }
 
   return (
@@ -28,34 +92,51 @@ export function MaintenanceTable() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Log ID</TableHead>
+            <TableHead className="w-8">#</TableHead>
             <TableHead>Vehicle</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Service Detail</TableHead>
+            <TableHead>Issue / Service</TableHead>
+            <TableHead>Mechanic</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Cost</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="text-right">Cost</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {records.map((log) => (
-            <TableRow key={log.id}>
-              <TableCell className="font-medium">{log.id}</TableCell>
-              <TableCell>{log.vehicle}</TableCell>
-              <TableCell>{log.type}</TableCell>
-              <TableCell>
-                <div className="flex flex-col">
-                  <span>{log.service}</span>
-                  <span className="text-xs text-muted-foreground">{log.date}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge className={cn("font-normal border", statusStyles[log.status])}>
-                  {log.status}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right">{log.cost}</TableCell>
-            </TableRow>
-          ))}
+          {rows.map((row, index) => {
+            let status = 'Open'
+            if (row.is_completed) {
+              status = 'Completed'
+            } else if (row.mechanic) {
+              status = 'In Progress'
+            }
+            const isPending = !row.is_completed
+
+            return (
+              <TableRow key={row.id}>
+                <TableCell className="text-muted-foreground">{index + 1}</TableCell>
+                <TableCell>
+                  <div className="font-medium">{row.vehicles?.name ?? '-'}</div>
+                  <div className="text-xs text-muted-foreground">{row.vehicles?.license_plate ?? ''}</div>
+                </TableCell>
+                <TableCell>{row.service_type}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">{row.mechanic ?? '—'}</TableCell>
+                <TableCell>{row.service_date}</TableCell>
+                <TableCell>₹ {row.cost.toLocaleString()}</TableCell>
+                <TableCell>
+                  <Badge className={cn('font-normal border', statusStyles[status])}>{status}</Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    {isPending ? (
+                      <Button size="sm" onClick={() => void markComplete(row.id)}>Mark Complete</Button>
+                    ) : null}
+                    <Button size="sm" variant="destructive" onClick={() => void handleDelete(row)}>Delete</Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )
+          })}
         </TableBody>
       </Table>
     </div>

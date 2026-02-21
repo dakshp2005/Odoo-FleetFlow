@@ -15,3 +15,8 @@ export const formatDate = (dateString: string) => {
 export const formatNumber = (num: number) => {
   return new Intl.NumberFormat('en-IN').format(num)
 }
+
+export const formatLakhs = (value: number) => {
+  const lakhs = value / 100000
+  return `₹ ${lakhs.toFixed(1)}L`
+}

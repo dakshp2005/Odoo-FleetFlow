@@ -10,6 +10,10 @@ const data = [
   { name: "Retired", value: 1, color: "#71717a" },
 ]
 
+const legendFormatter = (value: string) => (
+  <span className="text-xs font-medium text-muted-foreground">{value}</span>
+)
+
 export function FleetStatusChart() {
   return (
     <Card className="flex flex-col">
@@ -29,8 +33,8 @@ export function FleetStatusChart() {
                 paddingAngle={5}
                 dataKey="value"
               >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+                {data.map((entry) => (
+                  <Cell key={entry.name} fill={entry.color} />
                 ))}
               </Pie>
               <Tooltip 
@@ -44,7 +48,7 @@ export function FleetStatusChart() {
               <Legend 
                 verticalAlign="bottom" 
                 height={36}
-                formatter={(value) => <span className="text-xs font-medium text-muted-foreground">{value}</span>}
+                formatter={legendFormatter}
               />
             </PieChart>
           </ResponsiveContainer>

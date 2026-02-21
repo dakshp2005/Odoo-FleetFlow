@@ -2,26 +2,27 @@
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import type { MonthlyFinancialSummaryRow } from "@/lib/types/database"
 
-const data = [
-  { month: "Sep", revenue: 450000, expenses: 320000 },
-  { month: "Oct", revenue: 520000, expenses: 380000 },
-  { month: "Nov", revenue: 480000, expenses: 350000 },
-  { month: "Dec", revenue: 610000, expenses: 420000 },
-  { month: "Jan", revenue: 590000, expenses: 410000 },
-  { month: "Feb", revenue: 650000, expenses: 440000 },
-]
+interface Props {
+  data: MonthlyFinancialSummaryRow[]
+}
 
-export function MonthlyRevenueChart() {
+export function MonthlyRevenueChart({ data }: Readonly<Props>) {
+  const chartData = [...data].reverse().map((row) => ({
+    month: (row.month_label ?? "").slice(0, 3),
+    revenue: row.total_revenue ?? 0,
+    expenses: (row.total_fuel_cost ?? 0) + (row.total_maintenance_cost ?? 0),
+  }))
   return (
     <Card className="flex flex-col">
       <CardHeader>
         <CardTitle className="text-base font-medium">Monthly Financial Overview</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 pb-4">
-        <div className="h-[300px] w-full">
+        <div className="h-[220px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <BarChart data={chartData} margin={{ top: 16, right: 24, left: 16, bottom: 0 }} barSize={18} barCategoryGap="45%">
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis 
                 dataKey="month" 

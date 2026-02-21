@@ -9,53 +9,132 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { TRIP_STATUS_STYLES } from "@/lib/constants"
 import { cn } from "@/lib/utils/cn"
+import type { TripWithRelations } from "@/lib/types/database"
+import { Button } from "@/components/ui/button"
+import { createClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
+import { Skeleton } from "@/components/ui/skeleton"
 
-export function TripTable() {
-  const trips = [
-    { id: "T-1001", vehicle: "KA-01-MH-1234", driver: "Ravi Kumar", origin: "Bangalore", destination: "Mumbai", status: "Dispatched", cargo: "Electronics", weight: "12,000 kg" },
-    { id: "T-1002", vehicle: "KA-01-MH-5678", driver: "Suresh Raina", origin: "Bangalore", destination: "Chennai", status: "Completed", cargo: "Textiles", weight: "8,500 kg" },
-    { id: "T-1003", vehicle: "KA-01-MH-9012", driver: "Mahesh Babu", origin: "Mumbai", destination: "Hyderabad", status: "Dispatched", cargo: "Machinery", weight: "15,000 kg" },
-    { id: "T-1004", vehicle: "KA-01-NH-3456", driver: "Deepak Chahar", origin: "Chennai", destination: "Pune", status: "Draft", cargo: "Grains", weight: "10,000 kg" },
-    { id: "T-1005", vehicle: "KA-01-NH-7890", driver: "Virat Kohli", origin: "Delhi", destination: "Faridabad", status: "Completed", cargo: "FMCG", weight: "5,000 kg" },
-  ]
+/** Prompts for an odometer reading and returns the number, or null if cancelled/invalid. */
+function promptOdometer(label: string): number | null {
+  const entered = globalThis.window?.prompt(label)
+  if (!entered) return null
+  const parsed = Number(entered)
+  if (Number.isNaN(parsed) || parsed < 0) {
+    toast.error("Invalid odometer value")
+    return null
+  }
+  return parsed
+}
+
+export function TripTable({
+  trips,
+  isLoading,
+  onRefresh,
+}: Readonly<{
+  trips: TripWithRelations[]
+  isLoading: boolean
+  onRefresh: () => void
+}>) {
+  const updateTripStatus = async (trip: TripWithRelations, status: "Completed" | "Cancelled" | "On Way") => {
+    const supabase = createClient()
+    const payload: { status: string; start_odometer_km?: number; end_odometer_km?: number } = { status }
+
+    if (status === "On Way") {
+      const odo = promptOdometer("Enter start odometer reading (km)")
+      if (odo === null) return
+      payload.start_odometer_km = odo
+    }
+
+    if (status === "Completed") {
+      const odo = promptOdometer("Enter end odometer reading (km)")
+      if (odo === null) return
+      payload.end_odometer_km = odo
+      // distance_km is GENERATED ALWAYS AS (end_odometer_km - start_odometer_km) STORED
+      // Postgres computes it automatically — do NOT include it in the payload
+    }
+
+    const { error } = await supabase
+      .from("trips")
+      .update(payload)
+      .eq("id", trip.id)
+
+    if (error) {
+      toast.error(`Failed to update trip: ${error.message}`)
+      return
+    }
+
+    // Sync vehicle and driver statuses to match trip lifecycle
+    const isTerminal = status === "Completed" || status === "Cancelled"
+    const vehicleStatus = isTerminal ? "Available" : "On Trip"
+    const driverStatus = isTerminal ? "Available" : "On Duty"
+
+    await Promise.all([
+      trip.vehicle_id
+        ? supabase.from("vehicles").update({ status: vehicleStatus }).eq("id", trip.vehicle_id)
+        : Promise.resolve(),
+      trip.driver_id
+        ? supabase.from("drivers").update({ status: driverStatus }).eq("id", trip.driver_id)
+        : Promise.resolve(),
+    ])
+
+    toast.success(`Trip #${trip.id} updated to ${status}`)
+    onRefresh()
+  }
+
+  if (isLoading) {
+    return (
+      <div className="rounded-md border p-4 space-y-3">
+        <Skeleton className="h-6 w-1/3" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    )
+  }
+
+  if (trips.length === 0) {
+    return <div className="rounded-md border p-6 text-sm text-muted-foreground">No trips found</div>
+  }
 
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Trip ID</TableHead>
-            <TableHead>Vehicle & Driver</TableHead>
-            <TableHead>Route</TableHead>
-            <TableHead>Cargo</TableHead>
+            <TableHead>Trip#</TableHead>
+            <TableHead>Fleet Type</TableHead>
+            <TableHead>Origin</TableHead>
+            <TableHead>Destination</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="text-right">Weight</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {trips.map((trip) => (
             <TableRow key={trip.id}>
               <TableCell className="font-medium">{trip.id}</TableCell>
-              <TableCell>
-                <div className="flex flex-col">
-                  <span className="font-medium">{trip.vehicle}</span>
-                  <span className="text-xs text-muted-foreground">{trip.driver}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-1">
-                  <span>{trip.origin}</span>
-                  <span className="text-muted-foreground">→</span>
-                  <span>{trip.destination}</span>
-                </div>
-              </TableCell>
-              <TableCell>{trip.cargo}</TableCell>
+              <TableCell>{trip.vehicles?.type ?? "-"}</TableCell>
+              <TableCell>{trip.origin}</TableCell>
+              <TableCell>{trip.destination}</TableCell>
               <TableCell>
                 <Badge className={cn("font-normal", TRIP_STATUS_STYLES[trip.status])}>
                   {trip.status}
                 </Badge>
               </TableCell>
-              <TableCell className="text-right">{trip.weight}</TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
+                  {trip.status === "On Way" ? (
+                    <>
+                      <Button size="sm" onClick={() => void updateTripStatus(trip, "Completed")}>Complete</Button>
+                      <Button size="sm" variant="outline" onClick={() => void updateTripStatus(trip, "Cancelled")}>Cancel</Button>
+                    </>
+                  ) : null}
+                  {trip.status === "Pending" ? (
+                    <Button size="sm" onClick={() => void updateTripStatus(trip, "On Way")}>Send On Way</Button>
+                  ) : null}
+                </div>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

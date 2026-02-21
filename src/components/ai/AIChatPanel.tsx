@@ -1,6 +1,7 @@
 'use client'
 
-import { useChat } from 'ai/react'
+import { useChat } from '@ai-sdk/react'
+import { useState } from 'react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -13,10 +14,18 @@ interface AIChatPanelProps {
   onClose: () => void
 }
 
-export function AIChatPanel({ open, onClose }: AIChatPanelProps) {
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: '/api/ai/chat',
-  })
+export function AIChatPanel({ open, onClose }: Readonly<AIChatPanelProps>) {
+  const { messages, status, error, sendMessage } = useChat()
+  const isLoading = status === 'streaming' || status === 'submitted'
+
+  const [text, setText] = useState('')
+
+  function send() {
+    const trimmed = text.trim()
+    if (!trimmed || isLoading) return
+    setText('')
+    sendMessage({ text: trimmed })
+  }
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
@@ -44,13 +53,13 @@ export function AIChatPanel({ open, onClose }: AIChatPanelProps) {
               {[
                 'Which vehicles are available right now?',
                 'Who has the lowest safety score?',
-                'Show me this month\'s net profit',
+                "Show me this month's net profit",
                 'Add a new driver named Ravi Kumar',
                 'Which vehicle costs the most to run?',
               ].map((suggestion) => (
                 <button
                   key={suggestion}
-                  onClick={() => handleInputChange({ target: { value: suggestion } } as any)}
+                  onClick={() => { setText(''); sendMessage({ text: suggestion }) }}
                   className="w-full text-left text-xs px-3 py-2 rounded-lg border border-border hover:bg-surface-2 transition-colors"
                 >
                   {suggestion}
@@ -68,30 +77,36 @@ export function AIChatPanel({ open, onClose }: AIChatPanelProps) {
                 Thinking...
               </div>
             )}
+            {error && (
+              <div className="text-xs text-red-500 px-3 py-2 rounded-lg bg-red-50 border border-red-200">
+                ⚠ {error.message ?? 'Something went wrong. Check your API key.'}
+              </div>
+            )}
           </div>
         </ScrollArea>
 
         {/* Input */}
         <div className="border-t px-4 py-3">
-          <form onSubmit={handleSubmit} className="flex gap-2">
+          <div className="flex gap-2">
             <Textarea
-              value={input}
-              onChange={handleInputChange}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
               placeholder="Ask about your fleet..."
               className="resize-none text-sm min-h-[40px] max-h-[120px]"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
-                  handleSubmit(e as any)
+                  send()
                 }
               }}
             />
-            <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+            <Button type="button" size="icon" disabled={isLoading || !text.trim()} onClick={send}>
               <Send className="w-4 h-4" />
             </Button>
-          </form>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
   )
 }
+

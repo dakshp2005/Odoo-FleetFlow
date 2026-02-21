@@ -27,10 +27,10 @@ export const DRIVER_STATUS_STYLES: Record<string, string> = {
 }
 
 export const TRIP_STATUS_STYLES: Record<string, string> = {
-  'Draft':      'bg-zinc-100  text-zinc-600   border-zinc-200   hover:bg-zinc-100',
-  'Dispatched': 'bg-blue-50   text-blue-700   border-blue-200   hover:bg-blue-50',
-  'Completed':  'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50',
-  'Cancelled':  'bg-red-50    text-red-600    border-red-200    hover:bg-red-50',
+  'Pending':   'bg-zinc-100  text-zinc-600   border-zinc-200   hover:bg-zinc-100',
+  'On Way':    'bg-blue-50   text-blue-700   border-blue-200   hover:bg-blue-50',
+  'Completed': 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50',
+  'Cancelled': 'bg-red-50    text-red-600    border-red-200    hover:bg-red-50',
 }
 
 export const LICENSE_STATUS_STYLES: Record<string, string> = {

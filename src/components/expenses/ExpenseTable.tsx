@@ -6,21 +6,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
+import type { ExpenseRow } from "@/lib/hooks/useExpenses"
+import { Skeleton } from "@/components/ui/skeleton"
 
-export function ExpenseTable() {
-  const expenses = [
-    { id: "E-4001", tripId: "T-1001", vehicle: "KA-01-MH-1234", category: "Fuel", amount: "₹12,400", date: "21/02/2026", status: "Approved" },
-    { id: "E-4002", tripId: "T-1001", vehicle: "KA-01-MH-1234", category: "Toll", amount: "₹1,200", date: "21/02/2026", status: "Approved" },
-    { id: "E-4003", tripId: "T-1002", vehicle: "KA-01-MH-5678", category: "Fuel", amount: "₹8,900", date: "20/02/2026", status: "Pending" },
-    { id: "E-4004", tripId: "T-1003", vehicle: "KA-01-MH-9012", category: "Repair", amount: "₹4,500", date: "21/02/2026", status: "Approved" },
-    { id: "E-4005", tripId: "T-1002", vehicle: "KA-01-MH-5678", category: "Food", amount: "₹650", date: "20/02/2026", status: "Pending" },
-  ]
+export function ExpenseTable({
+  rows,
+  isLoading,
+}: Readonly<{
+  rows: ExpenseRow[]
+  isLoading: boolean
+}>) {
+  if (isLoading) {
+    return (
+      <div className="rounded-md border p-4 space-y-3">
+        <Skeleton className="h-6 w-1/3" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    )
+  }
 
-  const statusStyles: Record<string, string> = {
-    'Approved': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    'Pending':   'bg-amber-50  text-amber-700  border-amber-200',
-    'Rejected':  'bg-red-50    text-red-700    border-red-200',
+  if (rows.length === 0) {
+    return <div className="rounded-md border p-6 text-sm text-muted-foreground">No expense logs found</div>
   }
 
   return (
@@ -28,34 +36,44 @@ export function ExpenseTable() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Expense ID</TableHead>
-            <TableHead>Trip & Vehicle</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead className="w-8">#</TableHead>
+            <TableHead>Vehicle</TableHead>
+            <TableHead>Route</TableHead>
+            <TableHead>Driver</TableHead>
             <TableHead>Date</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
+            <TableHead>Liters</TableHead>
+            <TableHead>Fuel Cost</TableHead>
+            <TableHead>Misc</TableHead>
+            <TableHead>Total</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {expenses.map((expense) => (
-            <TableRow key={expense.id}>
-              <TableCell className="font-medium">{expense.id}</TableCell>
-              <TableCell>
-                <div className="flex flex-col">
-                  <span className="font-medium">{expense.tripId}</span>
-                  <span className="text-xs text-muted-foreground">{expense.vehicle}</span>
-                </div>
-              </TableCell>
-              <TableCell>{expense.category}</TableCell>
-              <TableCell>
-                <Badge className={statusStyles[expense.status]}>
-                  {expense.status}
-                </Badge>
-              </TableCell>
-              <TableCell>{expense.date}</TableCell>
-              <TableCell className="text-right font-medium">{expense.amount}</TableCell>
-            </TableRow>
-          ))}
+          {rows.map((expense, index) => {
+            const total = (expense.total_cost ?? 0) + (expense.misc_expense ?? 0)
+            return (
+              <TableRow key={expense.id}>
+                <TableCell className="text-muted-foreground">{index + 1}</TableCell>
+                <TableCell>
+                  <div className="font-medium">{expense.vehicles?.name ?? '—'}</div>
+                  <div className="text-xs text-muted-foreground">{expense.vehicles?.license_plate ?? ''}</div>
+                </TableCell>
+                <TableCell className="text-sm">
+                  {expense.trips ? (
+                    <span>{expense.trips.origin} → {expense.trips.destination}</span>
+                  ) : '—'}
+                  {expense.trips?.distance_km ? (
+                    <div className="text-xs text-muted-foreground">{expense.trips.distance_km.toLocaleString()} km</div>
+                  ) : null}
+                </TableCell>
+                <TableCell>{expense.trips?.drivers?.full_name ?? '—'}</TableCell>
+                <TableCell>{expense.fuel_date}</TableCell>
+                <TableCell>{expense.liters > 0 ? `${expense.liters.toLocaleString()} L` : '—'}</TableCell>
+                <TableCell>₹ {expense.total_cost.toLocaleString()}</TableCell>
+                <TableCell>₹ {(expense.misc_expense ?? 0).toLocaleString()}</TableCell>
+                <TableCell className="font-semibold">₹ {total.toLocaleString()}</TableCell>
+              </TableRow>
+            )
+          })}
         </TableBody>
       </Table>
     </div>
